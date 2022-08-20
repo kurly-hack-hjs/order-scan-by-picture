@@ -1,4 +1,4 @@
-package com.hackaton.kurly.order;
+package com.hackaton.kurly.domain.order;
 
 public enum ScanStatus {
     STANDBY, //대기중

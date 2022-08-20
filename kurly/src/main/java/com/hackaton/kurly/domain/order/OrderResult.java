@@ -1,4 +1,4 @@
-package com.hackaton.kurly.order;
+package com.hackaton.kurly.domain.order;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
