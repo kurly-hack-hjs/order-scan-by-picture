@@ -5,6 +5,7 @@ import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.ItemService;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
 import com.hackaton.kurly.domain.scan.dto.ScanRequest;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,12 @@ public class ScanController {
         return ResponseEntity.ok(result);
     }
 
+    @ApiOperation(
+            value = "이미지 텍스트 추출후, 주문과 대조"
+            , notes = "{ \"orderId\":1231246,\n" +
+            "\"imageUrl\":\"https://img-cf.kurly.com/shop/data/goods/1656479672431l0.jpg\"\n" +
+            "}" +
+            "로 테스트해보세요 ㅎㅎ... 제가 아직 테스트셋을 별로 안만들어놔서..ㅎㅎ;; (※ respone로 검증된 item정보들을 보여줍니다) ")
     @PostMapping("/scan")
     public ResponseEntity scanWithOrderIdAndImageUrl(@RequestBody ScanRequest scanRequest) throws IOException {
         ItemsResponse orderedItems = itemService.findOneItemCartByOrderId(scanRequest.getOrderId());
