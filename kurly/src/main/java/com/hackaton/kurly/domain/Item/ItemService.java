@@ -38,7 +38,7 @@ public class ItemService {
         //ItemCart itemCart = new ItemCart(orderId, json);
         // itemCartRepository.save(itemCart);
         List<OrderedItemInfo> itemList = Arrays.asList(mapper.readValue(json, OrderedItemInfo[].class));
-        return new ItemsResponse(orderId, itemList);
+        return new ItemsResponse(orderId, itemList, itemList.size());
     }
 
 }
