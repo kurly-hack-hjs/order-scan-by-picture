@@ -1,4 +1,4 @@
-package com.hackaton.kurly.controller;
+package com.hackaton.kurly.domain.order;
 
 
 import com.hackaton.kurly.domain.order.Order;
@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Api(value = "getOrderListToScan", tags = {"part-time", "order"})
+@Api(value = "getOrderListToScan")
 @RestController
 @RequiredArgsConstructor
 public class OrderController {
