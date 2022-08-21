@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -14,4 +16,7 @@ public class OrderService {
         return orderRepository.findAll(pageable);
     }
 
+    public Optional<Order> findOneOrderById(Long orderId){
+        return orderRepository.findById(orderId);
+    }
 }

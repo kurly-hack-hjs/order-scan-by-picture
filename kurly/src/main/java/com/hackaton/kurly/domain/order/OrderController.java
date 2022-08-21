@@ -1,11 +1,11 @@
 package com.hackaton.kurly.domain.order;
 
 
-import com.hackaton.kurly.domain.order.Order;
-import com.hackaton.kurly.domain.order.OrderService;
+import com.hackaton.kurly.domain.Item.ItemService;
+import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
+import com.hackaton.kurly.domain.order.dto.ReadOrderResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,13 +13,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
+import java.util.Optional;
 
 @Api(value = "getOrderListToScan")
 @RestController
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
+    private final ItemService itemService;
 
     @ApiOperation(
             value = "주문정보 목록 조회"
@@ -30,4 +35,17 @@ public class OrderController {
         return ResponseEntity.ok(orderList);
     }
 
+    @ApiOperation(
+            value = "주문정보 단일 조회"
+            , notes = "존재하지 않는 orderId를 보내게 되면 404 NOT FOUND가 뜹니다. [주문정보 목록 조회 api]를 이용해서 사용가능한 id를 확인하세요")
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity getOneOrderWithOrderedItems(@PathVariable Long orderId) throws IOException {
+        Optional<Order> wrapperOrder = orderService.findOneOrderById(orderId);
+        if (! wrapperOrder.isPresent()){
+            return ResponseEntity.notFound().build();
+        }
+        ItemsResponse items = itemService.findOneItemCartByOrderId(orderId);
+
+        return ResponseEntity.ok(new ReadOrderResponse(wrapperOrder.get(), items));
+    }
 }
