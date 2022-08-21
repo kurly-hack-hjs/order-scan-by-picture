@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class OrderedItemInfo {
     @Schema(description = "상품ID")
-    private UUID id;
+    private Integer id;
 
     @Schema(description = "상품이름")
     private String name;
@@ -27,7 +27,7 @@ public class OrderedItemInfo {
     @Enumerated(EnumType.STRING)
     private ScanStatus scanStatus;
 
-    public OrderedItemInfo(UUID id, String name, int count) {
+    public OrderedItemInfo(Integer id, String name, int count) {
         this.id = id;
         this.name = name;
         this.count = count;

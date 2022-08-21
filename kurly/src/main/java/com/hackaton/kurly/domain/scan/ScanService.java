@@ -2,17 +2,24 @@ package com.hackaton.kurly.domain.scan;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hackaton.kurly.domain.Item.DetailItem;
+import com.hackaton.kurly.domain.Item.Item;
+import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
+import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
+import com.hackaton.kurly.domain.Item.repository.DetailItemRepository;
+import com.hackaton.kurly.domain.Item.repository.ItemRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class ScanService {
+    private final DetailItemRepository detailItemRepository;
 
     @Value("${ocr-key}")
     private String ocrKey;
@@ -35,7 +42,7 @@ public class ScanService {
         return null;
     }
 
-    public List<String> extractTextFromResponse(ResponseEntity<String> response) throws JsonProcessingException {
+    private List<String> extractTextFromResponse(ResponseEntity<String> response) throws JsonProcessingException {
         //0. 감지한 텍스트는 inferText 라는 이름으로 텍스트 안에 저장된다.
         String responseBodyString = response.getBody();
 
@@ -57,5 +64,40 @@ public class ScanService {
         // 이걸로 Pseudo relevance feedback 데이터 셋 구성
         //now text set : ["L","grow","유기농","담음","신동진쌀","·","Organic","Rice","·","자연을","담은","건강한","식탁","유기농","(ORGANIC)","농협축산식품부","유기농","담을","1","쌀","한알","한알에","신신함과","장성을","가득","당은","유기농발","궁은","쌀알,","담백한","밥맛으로","유명한","신동산발을","유기농으로","건강하게","길러냈습니다.","원산지","용량","등급","친환경","국내산","4kg","상","유기농"]
         return texts;
+    }
+
+    public List<Item> compare2DataSetForScan(ItemsResponse itemsResponse, List<String> textListFromImage){
+        List<OrderedItemInfo> itemList=itemsResponse.getItemList();
+        List<DetailItem> scoreDictionary = new ArrayList<DetailItem>();
+        List<Item> result = new ArrayList<>();
+        //1. 필요한 단어셋 준비
+        for(OrderedItemInfo itemInfo : itemList){
+            Optional<DetailItem> detailItem =detailItemRepository.findById(itemInfo.getId());
+            if(detailItem.isPresent()){
+                scoreDictionary.add(detailItem.get());
+            }
+        }
+
+        //2.준비한 단어set에,대해서, textListFromImage가 그 단어을 갖고 있는지 확인
+        for(DetailItem item : scoreDictionary){
+            int score = 0;
+            if (textListFromImage.contains(item.getKey1())){
+                score = score+3;
+            }
+            if (textListFromImage.contains(item.getKey2())){
+                score = score+2;
+            }
+            if (textListFromImage.contains(item.getKey3())){
+                score = score+1;
+            }
+            if (textListFromImage.contains(item.getKey4())){
+                score = score+1;
+            }
+            //3. 최종 스코어가 정해놓은 점수 이상(>=)이면, 검증리스트에 추가된다.(두배이상 가점을 기록했을때?나 2개 검증할수도있을듯...)
+            if (score>= item.getMinimumScore()){
+                result.add(item.toItem());
+            }
+        }
+        return result;
     }
 }
