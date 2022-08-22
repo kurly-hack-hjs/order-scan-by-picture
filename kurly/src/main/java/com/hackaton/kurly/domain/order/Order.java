@@ -17,7 +17,6 @@ import java.time.LocalDate;
 public class Order {
 
     @javax.persistence.Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
     private Long id;
 

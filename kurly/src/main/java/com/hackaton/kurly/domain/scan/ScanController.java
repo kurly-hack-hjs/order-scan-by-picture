@@ -1,12 +1,18 @@
 package com.hackaton.kurly.domain.scan;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.ItemService;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
 import com.hackaton.kurly.domain.scan.dto.ScanRequest;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +28,7 @@ import java.util.List;
 public class ScanController {
     private final ItemService itemService;
     private final ScanService scanService;
-
+    private final ScanLogService scanLogService;
 
     @GetMapping("/scan/sample")
     public ResponseEntity scanBySample() throws JsonProcessingException {
@@ -40,14 +46,25 @@ public class ScanController {
             , notes = "{ \"orderId\":1231246,\n" +
             "\"imageUrl\":\"https://img-cf.kurly.com/shop/data/goods/1656479672431l0.jpg\"\n" +
             "}" +
-            "로 테스트해보세요 ㅎㅎ... 제가 아직 테스트셋을 별로 안만들어놔서..ㅎㅎ;; (※ respone로 검증된 item정보들을 보여줍니다) ")
+            "여기에 쿠키에서 읽어온 로그인 아이디값(임의로 아무거나)로 테스트해보세요 ㅎㅎ... 제가 아직 테스트셋을 별로 안만들어놔서..ㅎㅎ;; (※ respone로 검증된 item정보들을 보여줍니다) ")
     @PostMapping("/scan")
     public ResponseEntity scanWithOrderIdAndImageUrl(@RequestBody ScanRequest scanRequest) throws IOException {
         ItemsResponse orderedItems = itemService.findOneItemCartByOrderId(scanRequest.getOrderId());
         List<String> textsFromImage = scanService.contactToOcr(scanRequest.getImageUrl());
         List<Item> result =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
+
+        scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(result) ,scanRequest.getImageUrl()));
         return ResponseEntity.ok(result);
     }
+
+    @ApiOperation( value = "(관리자모드) OCR검증 API을 사용한 User의 scanLog 확인"
+            , notes = "기본 50개 출력(size로 조절하세요), id내림차순  ")
+    @GetMapping("/scan/logs")
+    public ResponseEntity getScanLogs(@PageableDefault(size = 50, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) throws IOException {
+        Page<ScanLog> scanLogs = scanLogService.getScanLogs(pageable);
+        return ResponseEntity.ok(scanLogs);
+    }
+
 
 
 }
