@@ -36,7 +36,12 @@ public class Order {
 
     private LocalDateTime updatedTimestamp;
 
+    private int tryCount;
+
     public void updateStatus(PatchOrderRequest request){
+        if(request.getNewOrderScanStatus().equals(ScanStatus.RESET)){
+            this.tryCount = 0;
+        }
         this.scanStatus = request.getNewOrderScanStatus();
         this.updatedUserId = request.getLoginId();
         this.updatedTimestamp =  LocalDateTime.now(ZoneId.of("Asia/Tokyo"));

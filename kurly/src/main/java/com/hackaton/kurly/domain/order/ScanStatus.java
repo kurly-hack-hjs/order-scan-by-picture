@@ -2,6 +2,7 @@ package com.hackaton.kurly.domain.order;
 
 public enum ScanStatus {
     STANDBY, //대기중
+    RESET, //관리자에 의한 리셋
     COMPLETE, //스캔 완료
     SCAN_FAIL, //스캔 실패
     ORDER_CANCEL, // 주문 취소

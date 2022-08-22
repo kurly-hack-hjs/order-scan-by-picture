@@ -52,7 +52,6 @@ public class ScanController {
         ItemsResponse orderedItems = itemService.findOneItemCartByOrderId(scanRequest.getOrderId());
         List<String> textsFromImage = scanService.contactToOcr(scanRequest.getImageUrl());
         List<Item> result =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
-
         scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(result) ,scanRequest.getImageUrl()));
         return ResponseEntity.ok(result);
     }
