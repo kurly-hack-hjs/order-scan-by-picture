@@ -3,6 +3,7 @@ package com.hackaton.kurly.domain.order;
 
 import com.hackaton.kurly.domain.Item.ItemService;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
+import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import com.hackaton.kurly.domain.order.dto.ReadOrderResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -12,9 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -47,5 +46,19 @@ public class OrderController {
         ItemsResponse items = itemService.findOneItemCartByOrderId(orderId);
 
         return ResponseEntity.ok(new ReadOrderResponse(wrapperOrder.get(), items));
+    }
+
+    @ApiOperation(
+            value = "주문정보 스캔결과 업데이트"
+            , notes = "존재하지 않는 orderId를 보내게 되면 404 NOT FOUND가 뜹니다. [주문정보 목록 조회 api]를 이용해서 사용가능한 id를 확인하세요")
+    @PatchMapping("/order/{orderId}/scan_result")
+    public ResponseEntity patchOrderToNewStatus (@RequestBody PatchOrderRequest request){
+        Optional<Order> wrapperOrder = orderService.findOneOrderById(request.getOrderId());
+        if (! wrapperOrder.isPresent()){
+            return ResponseEntity.notFound().build();
+        }
+        orderService.update(wrapperOrder.get(), request);
+
+        return ResponseEntity.notFound().build();
     }
 }

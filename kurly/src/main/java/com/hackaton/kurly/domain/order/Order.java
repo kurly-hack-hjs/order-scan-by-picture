@@ -1,5 +1,6 @@
 package com.hackaton.kurly.domain.order;
 
+import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -7,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @Builder
@@ -31,11 +34,13 @@ public class Order {
 
     private int quantity;
 
-    public void setId(Long id) {
-        this.id = id;
+    private LocalDateTime updatedTimestamp;
+
+    public void updateStatus(PatchOrderRequest request){
+        this.scanStatus = request.getNewOrderScanStatus();
+        this.updatedUserId = request.getLoginId();
+        this.updatedTimestamp =  LocalDateTime.now(ZoneId.of("Asia/Tokyo"));
+        this.memo = request.getMemo();
     }
 
-    public Long getId() {
-        return id;
-    }
 }

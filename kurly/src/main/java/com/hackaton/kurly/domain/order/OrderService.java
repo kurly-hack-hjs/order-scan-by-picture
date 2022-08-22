@@ -1,5 +1,6 @@
 package com.hackaton.kurly.domain.order;
 
+import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,5 +19,11 @@ public class OrderService {
 
     public Optional<Order> findOneOrderById(Long orderId){
         return orderRepository.findById(orderId);
+    }
+
+    public void update(Order order, PatchOrderRequest request) {
+        order.updateStatus(request);
+        orderRepository.save(order);
+
     }
 }
