@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+
 @RestController
 public class HomeController {
     @ApiOperation(
@@ -24,5 +26,13 @@ public class HomeController {
     @DeleteMapping("/")
     public ResponseEntity goHomeWithDelete(){
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/logistics")
+    public ResponseEntity getCenters(){
+        ArrayList<Center> centers = new ArrayList<>();
+        centers.add(new Center("송파", "C-01"));
+        centers.add(new Center("항동", "C-02"));
+    return ResponseEntity.ok(centers);
     }
 }
