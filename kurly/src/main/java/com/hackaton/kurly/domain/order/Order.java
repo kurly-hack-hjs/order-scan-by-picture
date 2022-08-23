@@ -17,6 +17,7 @@ import java.time.ZoneId;
 @NoArgsConstructor
 @Entity
 @Table(name = "orders")
+
 public class Order {
 
     @javax.persistence.Id
@@ -35,6 +36,11 @@ public class Order {
     private int quantity;
 
     private LocalDateTime updatedTimestamp;
+
+    public void setTryCount(int tryCount) {
+        this.tryCount = tryCount;
+        this.updatedTimestamp =  LocalDateTime.now(ZoneId.of("Asia/Tokyo"));
+    }
 
     private int tryCount;
 

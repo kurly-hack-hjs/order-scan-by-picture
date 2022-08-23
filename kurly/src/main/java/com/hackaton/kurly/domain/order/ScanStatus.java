@@ -7,6 +7,6 @@ public enum ScanStatus {
     SCAN_FAIL, //스캔 실패 (=재검증 필요)
     ORDER_CANCEL, // 주문 취소
     SCANNING, // (검증 진행중)
-    COUNT_ERROR,
+    COUNT_ERROR, // (수량 에러! 스냅샷에 나타납니다
     ETC; //기타 상태(=기타)
 }

@@ -7,6 +7,9 @@ import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
 import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
 import com.hackaton.kurly.domain.itemCart.repository.CartSnapshotRepository;
 import com.hackaton.kurly.domain.order.ScanStatus;
+import com.hackaton.kurly.domain.scan.dto.ScanRequest;
+import com.hackaton.kurly.domain.snapshot.Snapshot;
+import com.hackaton.kurly.domain.snapshot.SnapshotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,17 +21,22 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ItemCartService {
-    private final CartSnapshotRepository snapshotRepository;
+    private final CartSnapshotRepository CartSnapshotRepository;
+    private final SnapshotRepository snapshotRepository;
     private final ObjectMapper mapper;
 
     public SnapshotResponse findCartSnapshotById(Long orderId) throws JsonProcessingException {
 
-        CartSnapshot cartSnapshot = snapshotRepository.findById(orderId).get();
+        CartSnapshot cartSnapshot = CartSnapshotRepository.findById(orderId).get();
 
         return makeSnapshotResponse(cartSnapshot, orderId);
     }
 
-    public SnapshotResponse checkNextStatus(SnapshotResponse snapshot, List<Item> foundItems, int tryCount, Long orderId) throws IOException {
+    public SnapshotResponse checkNextStatus(SnapshotResponse snapshot, List<Item> foundItems, ScanRequest scanRequest) throws IOException {
+        Long orderId = scanRequest.getOrderId();
+        int tryCount = scanRequest.getTryCount();
+        String userId = scanRequest.getLoginId();
+
         List<OrderedItemInfo> stock = snapshot.getRestList();
 
         for(Item item : foundItems){
@@ -53,9 +61,10 @@ public class ItemCartService {
         // 5. 123의 변경되게된 상태들만 snapshot에 copy해준다..
         snapshot.injectNextStatusFrom(stock);
         // 6. 새 상태(snapshot, stock) 와, 지금이 몇회차(tryCount)인지 DB에 저장한다...
-        CartSnapshot cartSnapshot = snapshotRepository.findById(orderId).get();
+        CartSnapshot cartSnapshot = CartSnapshotRepository.findById(orderId).get();
         cartSnapshot.updateByScanResult(formatByJson(snapshot.getSnapshot()), formatByJson(stock), tryCount);
-        snapshotRepository.save(cartSnapshot);
+        CartSnapshotRepository.save(cartSnapshot);
+        snapshotRepository.save(new Snapshot(orderId, tryCount, cartSnapshot.getSnapshot(), scanRequest.getLoginId()));
         return makeSnapshotResponse(cartSnapshot, orderId);
     }
 

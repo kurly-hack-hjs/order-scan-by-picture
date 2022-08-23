@@ -1,9 +1,12 @@
 package com.hackaton.kurly.domain.scan;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.ItemService;
+import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
+import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
 import com.hackaton.kurly.domain.itemCart.ItemCartService;
 import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
 import com.hackaton.kurly.domain.order.Order;
@@ -12,6 +15,10 @@ import com.hackaton.kurly.domain.order.ScanStatus;
 import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import com.hackaton.kurly.domain.scan.dto.ScanRequest;
 import com.hackaton.kurly.domain.scan.dto.ScanResultResponse;
+import com.hackaton.kurly.domain.snapshot.ShotDto;
+import com.hackaton.kurly.domain.snapshot.Snapshot;
+import com.hackaton.kurly.domain.snapshot.SnapshotPk;
+import com.hackaton.kurly.domain.snapshot.SnapshotRepository;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +32,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -36,6 +46,8 @@ public class ScanController {
     private final ScanService scanService;
     private final ScanLogService scanLogService;
     private final ItemCartService itemCartService;
+    private final SnapshotRepository snapshotRepository;
+    private final ObjectMapper mapper;
     private int firstTry = 1;
     @GetMapping("/scan/sample")
     public ResponseEntity scanBySample() throws JsonProcessingException {
@@ -60,16 +72,26 @@ public class ScanController {
         if(scanRequest.getTryCount() == firstTry) { //첫 시도일때 상태 변경
             PatchOrderRequest request = new PatchOrderRequest(scanRequest.getOrderId(), ScanStatus.SCANNING, scanRequest.getLoginId(), null);
             order.updateStatus(request);
-            orderService.save(order);
         }
+        order.setTryCount(scanRequest.getTryCount());
+        orderService.save(order);
+        ItemsResponse originItems = itemService.findOneItemCartByOrderId(order.getId());
 
         SnapshotResponse orderedItems = itemCartService.findCartSnapshotById(scanRequest.getOrderId());
         List<String> textsFromImage = scanService.contactToOcr(scanRequest.getImageUrl());
         List<Item> foundItems =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
          scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(foundItems) ,scanRequest.getImageUrl()));
-        orderedItems= itemCartService.checkNextStatus(orderedItems, foundItems, scanRequest.getTryCount(), scanRequest.getOrderId());
+        orderedItems= itemCartService.checkNextStatus(orderedItems, foundItems, scanRequest);
+        List<Snapshot> snapshots= snapshotRepository.findByOrderId(scanRequest.getOrderId());
 
-        return ResponseEntity.ok(new ScanResultResponse(order,foundItems, orderedItems, scanRequest.getTryCount()));
+        List<ShotDto> shotDtos = new ArrayList<>();
+        for(Snapshot snapshot:snapshots){
+            List<OrderedItemInfo> arrays = Arrays.asList(mapper.readValue(snapshot.getSnapshots(), OrderedItemInfo[].class));
+            shotDtos.add(new ShotDto(snapshot.getOrderId(),snapshot.getTryCount(), arrays));
+        }
+
+
+        return ResponseEntity.ok(new ScanResultResponse(order,foundItems, originItems, shotDtos, scanRequest.getTryCount()));
     }
 
     @ApiOperation( value = "(관리자모드) OCR검증 API을 사용한 User의 scanLog 확인"
@@ -79,7 +101,5 @@ public class ScanController {
         Page<ScanLog> scanLogs = scanLogService.getScanLogs(pageable);
         return ResponseEntity.ok(scanLogs);
     }
-
-
 
 }
