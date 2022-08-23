@@ -1,5 +1,6 @@
-package com.hackaton.kurly.domain.Item;
+package com.hackaton.kurly.domain.itemCart;
 
+import com.hackaton.kurly.domain.Item.ItemService;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;

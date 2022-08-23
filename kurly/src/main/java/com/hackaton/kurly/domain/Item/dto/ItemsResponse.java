@@ -18,6 +18,7 @@ public class ItemsResponse {
     @Schema(description = "쇼핑목록")
     private List<OrderedItemInfo> itemList;
 
+    @Schema(description = "아이템 종류 갯수")
     private int totalItemCount;
 
 }

@@ -1,12 +1,17 @@
 package com.hackaton.kurly.domain.scan;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.ItemService;
-import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
+import com.hackaton.kurly.domain.itemCart.ItemCartService;
+import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
+import com.hackaton.kurly.domain.order.Order;
+import com.hackaton.kurly.domain.order.OrderService;
+import com.hackaton.kurly.domain.order.ScanStatus;
+import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import com.hackaton.kurly.domain.scan.dto.ScanRequest;
+import com.hackaton.kurly.domain.scan.dto.ScanResultResponse;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,10 +31,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class ScanController {
+    private final OrderService orderService;
     private final ItemService itemService;
     private final ScanService scanService;
     private final ScanLogService scanLogService;
-
+    private final ItemCartService itemCartService;
+    private int firstTry = 1;
     @GetMapping("/scan/sample")
     public ResponseEntity scanBySample() throws JsonProcessingException {
         //컬리에서 샘플용 이미지 세팅(컬리해커톤용, 상업용도 사용X)
@@ -49,11 +56,20 @@ public class ScanController {
             "여기에 쿠키에서 읽어온 로그인 아이디값(임의로 아무거나)로 테스트해보세요 ㅎㅎ... 제가 아직 테스트셋을 별로 안만들어놔서..ㅎㅎ;; (※ respone로 검증된 item정보들을 보여줍니다) ")
     @PostMapping("/scan")
     public ResponseEntity scanWithOrderIdAndImageUrl(@RequestBody ScanRequest scanRequest) throws IOException {
-        ItemsResponse orderedItems = itemService.findOneItemCartByOrderId(scanRequest.getOrderId());
+        Order order= orderService.findOneOrderById(scanRequest.getOrderId()).get();
+        if(scanRequest.getTryCount() == firstTry) { //첫 시도일때 상태 변경
+            PatchOrderRequest request = new PatchOrderRequest(scanRequest.getOrderId(), ScanStatus.SCANNING, scanRequest.getLoginId(), null);
+            order.updateStatus(request);
+            orderService.save(order);
+        }
+
+        SnapshotResponse orderedItems = itemCartService.findCartSnapshotById(scanRequest.getOrderId());
         List<String> textsFromImage = scanService.contactToOcr(scanRequest.getImageUrl());
-        List<Item> result =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
-        scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(result) ,scanRequest.getImageUrl()));
-        return ResponseEntity.ok(result);
+        List<Item> foundItems =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
+         scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(foundItems) ,scanRequest.getImageUrl()));
+        orderedItems= itemCartService.checkNextStatus(orderedItems, foundItems, scanRequest.getTryCount(), scanRequest.getOrderId());
+
+        return ResponseEntity.ok(new ScanResultResponse(order,foundItems, orderedItems, scanRequest.getTryCount()));
     }
 
     @ApiOperation( value = "(관리자모드) OCR검증 API을 사용한 User의 scanLog 확인"

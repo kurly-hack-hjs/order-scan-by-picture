@@ -2,12 +2,14 @@ package com.hackaton.kurly.domain.scan;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hackaton.kurly.LongRestTemplate;
 import com.hackaton.kurly.domain.Item.DetailItem;
 import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
 import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
 import com.hackaton.kurly.domain.Item.repository.DetailItemRepository;
 import com.hackaton.kurly.domain.Item.repository.ItemRepository;
+import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -32,10 +34,11 @@ public class ScanService {
         String json = "{\"images\":[{\"format\":\"jpg\",\"name\":\"demo\",\"url\":\"" +
                 imageUrl +
                 "\"}],\"requestId\":\"guide-json-demo\",\"version\":\"V2\",\"timestamp\":1584062336793}";
-        RestTemplate restTemplate = new RestTemplate();
+        LongRestTemplate restTemplate = new LongRestTemplate(10);
         HttpEntity<String> request = new HttpEntity<String>(json, headers);
         ResponseEntity<String> response = restTemplate.postForEntity("https://uo3w7cyx2k.apigw.ntruss.com/custom/v1/17834/61a3bd339557ae2268b281c268ba43e511e4a93e5667b1e44aabb37306535dc6/general",
                 request, String.class);
+        System.out.println(response.toString());
         if (response.getStatusCode() == HttpStatus.OK) {
             return extractTextFromResponse(response);
         }
@@ -66,7 +69,7 @@ public class ScanService {
         return texts;
     }
 
-    public List<Item> compare2DataSetForScan(ItemsResponse itemsResponse, List<String> textListFromImage){
+    public List<Item> compare2DataSetForScan(SnapshotResponse itemsResponse, List<String> textListFromImage){
         List<OrderedItemInfo> itemList=itemsResponse.getItemList();
         List<DetailItem> scoreDictionary = new ArrayList<DetailItem>();
         List<Item> result = new ArrayList<>();

@@ -3,15 +3,15 @@ package com.hackaton.kurly.domain.Item;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
 import com.hackaton.kurly.domain.Item.repository.DetailItemRepository;
-import com.hackaton.kurly.domain.Item.repository.ItemCartRepository;
+import com.hackaton.kurly.domain.itemCart.repository.ItemCartRepository;
 import com.hackaton.kurly.domain.Item.repository.ItemRepository;
 import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
+import com.hackaton.kurly.domain.itemCart.ItemCart;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 

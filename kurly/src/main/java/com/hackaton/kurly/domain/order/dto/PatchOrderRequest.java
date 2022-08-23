@@ -2,9 +2,13 @@ package com.hackaton.kurly.domain.order.dto;
 
 import com.hackaton.kurly.domain.order.ScanStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PatchOrderRequest {
     @Schema(description = "업데이트하고자 하는 주문의 orderId")
     private Long orderId;

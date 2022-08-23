@@ -24,6 +24,9 @@ public class OrderService {
     public void update(Order order, PatchOrderRequest request) {
         order.updateStatus(request);
         orderRepository.save(order);
+    }
 
+    public void save(Order order){
+        orderRepository.save(order);
     }
 }

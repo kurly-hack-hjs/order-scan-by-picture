@@ -1,0 +1,76 @@
+package com.hackaton.kurly.domain.itemCart;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hackaton.kurly.domain.Item.Item;
+import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
+import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
+import com.hackaton.kurly.domain.itemCart.repository.CartSnapshotRepository;
+import com.hackaton.kurly.domain.order.ScanStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ItemCartService {
+    private final CartSnapshotRepository snapshotRepository;
+    private final ObjectMapper mapper;
+
+    public SnapshotResponse findCartSnapshotById(Long orderId) throws JsonProcessingException {
+
+        CartSnapshot cartSnapshot = snapshotRepository.findById(orderId).get();
+
+        return makeSnapshotResponse(cartSnapshot, orderId);
+    }
+
+    public SnapshotResponse checkNextStatus(SnapshotResponse snapshot, List<Item> foundItems, int tryCount, Long orderId) throws IOException {
+        List<OrderedItemInfo> stock = snapshot.getRestList();
+
+        for(Item item : foundItems){
+            for(OrderedItemInfo stockItem : stock){
+                int itemId = item.getId();;
+                int orderedItemId = stockItem.getId();
+                if(itemId == orderedItemId ){ //1. 찾아낸 아이템 중에, 주문 목록(scanStock)에 같은 상품이 있으면
+                    //2. 주문 목록의 해당 아이템에서 수량을 하나 빼서, 저장해준다.
+                    System.out.println("same!!"+itemId +"/"+ orderedItemId);
+                    stockItem.setCount(stockItem.getCount()-1);
+                    //3. 만약 이 다음 주문목록의 해당아이템 수량이 0이면 검증 COMPLETE / 0이 아니면 수량 미충족..으로 상태 변경
+                    if(stockItem.getCount() == 0){
+                        stockItem.setScanStatus(ScanStatus.COMPLETE);
+                    }
+                    else{
+                        stockItem.setScanStatus(ScanStatus.COUNT_ERROR);
+                    }
+                }
+            }
+        }
+        //4.이렇게 stock에 기록을 끝마치고
+        // 5. 123의 변경되게된 상태들만 snapshot에 copy해준다..
+        snapshot.injectNextStatusFrom(stock);
+        // 6. 새 상태(snapshot, stock) 와, 지금이 몇회차(tryCount)인지 DB에 저장한다...
+        CartSnapshot cartSnapshot = snapshotRepository.findById(orderId).get();
+        cartSnapshot.updateByScanResult(formatByJson(snapshot.getSnapshot()), formatByJson(stock), tryCount);
+        snapshotRepository.save(cartSnapshot);
+        return makeSnapshotResponse(cartSnapshot, orderId);
+    }
+
+    private String formatByJson(List<OrderedItemInfo> list) throws IOException {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        mapper.writeValue(out, list);
+        final byte[] data = out.toByteArray();
+        return new String(data);
+    }
+
+    private SnapshotResponse makeSnapshotResponse(CartSnapshot cartSnapshot, Long orderId) throws JsonProcessingException {
+        List<OrderedItemInfo> itemList = Arrays.asList(mapper.readValue(cartSnapshot.getOrderList(), OrderedItemInfo[].class));
+        List<OrderedItemInfo> snapshot = Arrays.asList(mapper.readValue(cartSnapshot.getSnapshot(), OrderedItemInfo[].class));
+        List<OrderedItemInfo> stock = Arrays.asList(mapper.readValue(cartSnapshot.getScanStock(), OrderedItemInfo[].class));
+
+        return new SnapshotResponse(orderId, itemList, snapshot, stock, itemList.size(), cartSnapshot.getTryCount());
+    }
+}
