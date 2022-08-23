@@ -22,6 +22,7 @@ public class Order {
 
     @javax.persistence.Id
     @Column(name = "order_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +37,13 @@ public class Order {
     private int quantity;
 
     private LocalDateTime updatedTimestamp;
+
+    public Order(  int quantity) {
+        this.scanStatus = ScanStatus.STANDBY;
+        this.orderDate = LocalDate.now(ZoneId.of("Asia/Tokyo"));
+        this.quantity = quantity;
+        this.tryCount = 0;
+    }
 
     public void setTryCount(int tryCount) {
         this.tryCount = tryCount;

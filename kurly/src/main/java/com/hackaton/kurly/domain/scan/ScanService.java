@@ -38,7 +38,6 @@ public class ScanService {
         HttpEntity<String> request = new HttpEntity<String>(json, headers);
         ResponseEntity<String> response = restTemplate.postForEntity("https://uo3w7cyx2k.apigw.ntruss.com/custom/v1/17834/61a3bd339557ae2268b281c268ba43e511e4a93e5667b1e44aabb37306535dc6/general",
                 request, String.class);
-        System.out.println(response.toString());
         if (response.getStatusCode() == HttpStatus.OK) {
             return extractTextFromResponse(response);
         }

@@ -21,13 +21,18 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ItemCartService {
-    private final CartSnapshotRepository CartSnapshotRepository;
+    private final CartSnapshotRepository cartSnapshotRepository;
     private final SnapshotRepository snapshotRepository;
     private final ObjectMapper mapper;
 
+    public void save(CartSnapshot cartSnapshot){
+        cartSnapshotRepository.save(cartSnapshot);
+    }
+
+
     public SnapshotResponse findCartSnapshotById(Long orderId) throws JsonProcessingException {
 
-        CartSnapshot cartSnapshot = CartSnapshotRepository.findById(orderId).get();
+        CartSnapshot cartSnapshot = cartSnapshotRepository.findById(orderId).get();
 
         return makeSnapshotResponse(cartSnapshot, orderId);
     }
@@ -61,9 +66,9 @@ public class ItemCartService {
         // 5. 123의 변경되게된 상태들만 snapshot에 copy해준다..
         snapshot.injectNextStatusFrom(stock);
         // 6. 새 상태(snapshot, stock) 와, 지금이 몇회차(tryCount)인지 DB에 저장한다...
-        CartSnapshot cartSnapshot = CartSnapshotRepository.findById(orderId).get();
+        CartSnapshot cartSnapshot = cartSnapshotRepository.findById(orderId).get();
         cartSnapshot.updateByScanResult(formatByJson(snapshot.getSnapshot()), formatByJson(stock), tryCount);
-        CartSnapshotRepository.save(cartSnapshot);
+        cartSnapshotRepository.save(cartSnapshot);
         snapshotRepository.save(new Snapshot(orderId, tryCount, cartSnapshot.getSnapshot(), scanRequest.getLoginId()));
         return makeSnapshotResponse(cartSnapshot, orderId);
     }

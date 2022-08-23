@@ -26,7 +26,8 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    public void save(Order order){
-        orderRepository.save(order);
+    public Order save(Order order){
+        order= orderRepository.save(order);
+        return order;
     }
 }

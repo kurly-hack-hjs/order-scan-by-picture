@@ -1,8 +1,14 @@
 package com.hackaton.kurly.domain.order;
 
 
+import com.google.gson.Gson;
+import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.ItemService;
 import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
+import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
+import com.hackaton.kurly.domain.itemCart.CartSnapshot;
+import com.hackaton.kurly.domain.itemCart.ItemCartService;
+import com.hackaton.kurly.domain.order.dto.MakeOrderDto;
 import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import com.hackaton.kurly.domain.order.dto.ReadOrderResponse;
 import io.swagger.annotations.Api;
@@ -16,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Api(value = "getOrderListToScan")
@@ -24,6 +32,7 @@ import java.util.Optional;
 public class OrderController {
     private final OrderService orderService;
     private final ItemService itemService;
+    private final ItemCartService itemCartService;
 
     @ApiOperation(
             value = "주문정보 목록 조회"
@@ -60,5 +69,29 @@ public class OrderController {
         orderService.update(wrapperOrder.get(), request);
 
         return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/order/new")
+    public ResponseEntity makeOrder(@RequestBody MakeOrderDto makeOrderDto){
+        List<Integer> itemIdList = makeOrderDto.getItemIds();
+        List<Integer> countList = makeOrderDto.getItemCounts();
+        int itemKindCount = itemIdList.size();
+
+        int totalCount=0;
+        for(int count: countList){
+            totalCount= totalCount + count;
+        }
+
+        Order order = orderService.save(new Order(totalCount));
+        List<OrderedItemInfo> list = new ArrayList<>();
+        for(int i = 0; i<itemKindCount ; i++) {
+             Item item = itemService.findItemById(itemIdList.get(i));
+             OrderedItemInfo orderedItemInfo = new OrderedItemInfo(item.getId(), item.getName(), countList.get(i));
+             list.add(orderedItemInfo);
+        }
+        String string= new Gson().toJson(list).toString();
+        itemCartService.save(new CartSnapshot(order.getId(), string, string, string, 0));
+
+            return ResponseEntity.ok(order);
     }
 }

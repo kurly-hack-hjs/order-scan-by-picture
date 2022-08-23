@@ -47,4 +47,7 @@ public class ItemService {
         return detailItemRepository.findAll(pageable);
     }
 
+    public Item findItemById(int id){
+        return itemRepository.findById(id).get();
+    }
 }
