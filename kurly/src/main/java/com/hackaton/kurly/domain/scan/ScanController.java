@@ -82,16 +82,17 @@ public class ScanController {
         List<Item> foundItems =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
          scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(foundItems) ,scanRequest.getImageUrl()));
         orderedItems= itemCartService.checkNextStatus(orderedItems, foundItems, scanRequest);
-        List<Snapshot> snapshots= snapshotRepository.findByOrderId(scanRequest.getOrderId());
-
-        List<ShotDto> shotDtos = new ArrayList<>();
+        List<Snapshot> snapshotList = snapshotRepository.findByOrderId(scanRequest.getOrderId());
+        Snapshot thisSnapshot = snapshotList.get(scanRequest.getTryCount());
+        List<OrderedItemInfo> arrays = Arrays.asList(mapper.readValue(thisSnapshot.getSnapshots(), OrderedItemInfo[].class));
+        /*List<ShotDto> shotDtos = new ArrayList<>();
         for(Snapshot snapshot:snapshots){
             List<OrderedItemInfo> arrays = Arrays.asList(mapper.readValue(snapshot.getSnapshots(), OrderedItemInfo[].class));
             shotDtos.add(new ShotDto(snapshot.getOrderId(),snapshot.getTryCount(), arrays));
-        }
+        }*/
 
-
-        return ResponseEntity.ok(new ScanResultResponse(order,foundItems, originItems, shotDtos, scanRequest.getTryCount()));
+        ShotDto shotDto = new ShotDto(thisSnapshot.getOrderId(),thisSnapshot.getTryCount(), arrays);
+        return ResponseEntity.ok(new ScanResultResponse(order,foundItems, originItems, shotDto, scanRequest.getTryCount()));
     }
 
     @ApiOperation( value = "(관리자모드) OCR검증 API을 사용한 User의 scanLog 확인"

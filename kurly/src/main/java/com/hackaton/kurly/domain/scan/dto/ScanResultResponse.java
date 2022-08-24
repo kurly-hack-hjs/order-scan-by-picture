@@ -21,6 +21,6 @@ public class ScanResultResponse {
     private Order order;
     private List<Item> foundItemsFromPicture;
     private ItemsResponse originItems;
-    private List<ShotDto>  snapshots;
+    private ShotDto  thisTurnSnapshot;
     private int tryCount;
 }
