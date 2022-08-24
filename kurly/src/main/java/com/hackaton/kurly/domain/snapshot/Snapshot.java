@@ -23,4 +23,6 @@ public class Snapshot {
     private String snapshots;
 
     private String userId;
+
+    private boolean isSatisfied;
 }

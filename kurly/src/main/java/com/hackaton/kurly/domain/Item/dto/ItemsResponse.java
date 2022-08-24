@@ -20,5 +20,4 @@ public class ItemsResponse {
 
     @Schema(description = "아이템 종류 갯수")
     private int totalItemCount;
-
 }

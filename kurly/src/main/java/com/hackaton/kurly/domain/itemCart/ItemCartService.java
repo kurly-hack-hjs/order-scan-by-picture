@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -62,14 +64,32 @@ public class ItemCartService {
                 }
             }
         }
-        //4.이렇게 stock에 기록을 끝마치고
+
+        //4. 검증후에 stock을 보면서 모두 완료됐는지 아닌지 판단함
+        Set<Boolean> resultSet = new HashSet<>();
+        for(OrderedItemInfo item : stock) {
+            if (item.getScanStatus().equals(ScanStatus.COMPLETE)){
+                resultSet.add(true);
+            }
+            else{
+                resultSet.add(false);
+            }
+        }
+        boolean isSatisfied = true;
+        if (resultSet.contains(false)) {
+            isSatisfied = false;
+        }
+
+
+
         // 5. 123의 변경되게된 상태들만 snapshot에 copy해준다..
         snapshot.injectNextStatusFrom(stock);
         // 6. 새 상태(snapshot, stock) 와, 지금이 몇회차(tryCount)인지 DB에 저장한다...
         CartSnapshot cartSnapshot = cartSnapshotRepository.findById(orderId).get();
         cartSnapshot.updateByScanResult(formatByJson(snapshot.getSnapshot()), formatByJson(stock), tryCount);
         cartSnapshotRepository.save(cartSnapshot);
-        snapshotRepository.save(new Snapshot(orderId, tryCount, cartSnapshot.getSnapshot(), scanRequest.getLoginId()));
+
+        snapshotRepository.save(new Snapshot(orderId, tryCount, cartSnapshot.getSnapshot(), scanRequest.getLoginId(), isSatisfied));
         return makeSnapshotResponse(cartSnapshot, orderId);
     }
 
