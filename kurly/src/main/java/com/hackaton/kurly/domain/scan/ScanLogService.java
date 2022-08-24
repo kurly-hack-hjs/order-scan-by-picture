@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ScanLogService {
@@ -15,6 +17,9 @@ public class ScanLogService {
         scanLogRepository.save(scanLog);
     }
 
+    public List<ScanLog> findByOrderId (Long orderId ){
+        return scanLogRepository.findByOrderIdOrderByTryCountAsc(orderId);
+    }
 
     public Page<ScanLog> getScanLogs(Pageable pageable){
         return scanLogRepository.findAll(pageable);

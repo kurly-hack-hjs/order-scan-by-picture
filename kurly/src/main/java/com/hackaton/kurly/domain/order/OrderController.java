@@ -13,6 +13,8 @@ import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
 import com.hackaton.kurly.domain.order.dto.MakeOrderDto;
 import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import com.hackaton.kurly.domain.order.dto.ReadOrderResponse;
+import com.hackaton.kurly.domain.scan.ScanLog;
+import com.hackaton.kurly.domain.scan.ScanLogService;
 import com.hackaton.kurly.domain.snapshot.ShotWithOrder;
 import com.hackaton.kurly.domain.snapshot.Snapshot;
 import com.hackaton.kurly.domain.snapshot.SnapshotService;
@@ -27,6 +29,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +45,7 @@ public class OrderController {
     private final ItemCartService itemCartService;
     private final SnapshotService snapshotService;
     private final ObjectMapper objectMapper;
+    private final ScanLogService scanLogService;
 
     @ApiOperation(
             value = "주문정보 목록 조회"
@@ -66,20 +71,23 @@ public class OrderController {
 
         //기본 origin 주문 아이템 목록가져옴
         SnapshotResponse item = itemCartService.findCartSnapshotById(orderId);
-        ItemsResponse items = new ItemsResponse(orderId, item.getItemList(), item.getTotalItemCount());
+        ItemsResponse foundItem = new ItemsResponse(orderId, item.getItemList(), item.getTotalItemCount());
 
 
         // 스냅샷 정보들 가져옴
         List<ShotWithOrder> snapshotList = new ArrayList<>();
         List<Snapshot> snapshots = snapshotService.findBySnapshot(orderId);
-        for (Snapshot snapshot : snapshots){
-            List<OrderedItemInfo> snapshotByItem = Arrays.asList(objectMapper.readValue(snapshot.getSnapshots(), OrderedItemInfo[].class));
-            snapshotList.add(new ShotWithOrder(orderId,  snapshot.getTryCount(),snapshotByItem ,snapshot.isSatisfied()));
+        List<ScanLog> scanLog = scanLogService.findByOrderId(orderId);
+
+        for (int i=0; i<snapshots.size(); i++){
+            List<OrderedItemInfo> snapshotByItem = Arrays.asList(objectMapper.readValue(snapshots.get(i).getSnapshots(), OrderedItemInfo[].class));
+            List<Item> scanResult = Arrays.asList(objectMapper.readValue(scanLog.get(i).getScanResult(),Item[].class));
+            snapshotList.add(new ShotWithOrder(orderId,  snapshots.get(i).getTryCount(),snapshotByItem ,snapshots.get(i).isSatisfied(), scanResult));
         }
 
 
 
-        return ResponseEntity.ok(new ReadOrderResponse(order, items, snapshotList, order.getTryCount()));
+        return ResponseEntity.ok(new ReadOrderResponse(order, foundItem, snapshotList, order.getTryCount()));
     }
 
 
@@ -118,6 +126,7 @@ public class OrderController {
         String string= new Gson().toJson(list).toString();
         itemCartService.save(new CartSnapshot(order.getId(), string, string, string, 0));
         snapshotService.save(new Snapshot(order.getId(), 0, string, null, false));
+        scanLogService.saveScanLogs(new ScanLog(null , null, order.getId(), LocalDateTime.now(ZoneId.of("Asia/Tokyo")),  "[]", null, 0));
             return ResponseEntity.ok(order);
     }
 }

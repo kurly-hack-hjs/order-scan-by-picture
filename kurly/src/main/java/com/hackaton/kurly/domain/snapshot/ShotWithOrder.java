@@ -1,5 +1,6 @@
 package com.hackaton.kurly.domain.snapshot;
 
+import com.hackaton.kurly.domain.Item.Item;
 import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,4 +16,5 @@ public class ShotWithOrder {
     private int tryCount;
     private List<OrderedItemInfo> itemList;
     private boolean isSatisfied;
+    private List<Item> foundedItem;
 }

@@ -80,7 +80,9 @@ public class ScanController {
         SnapshotResponse orderedItems = itemCartService.findCartSnapshotById(scanRequest.getOrderId());
         List<String> textsFromImage = scanService.contactToOcr(scanRequest.getImageUrl());
         List<Item> foundItems =scanService.compare2DataSetForScan(orderedItems, textsFromImage);
-         scanLogService.saveScanLogs(new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(), new Gson().toJson(foundItems) ,scanRequest.getImageUrl()));
+        ScanLog scanLog = new ScanLog(scanRequest.getLoginId(), scanRequest.getOrderId(),
+                new Gson().toJson(foundItems) ,scanRequest.getImageUrl(), scanRequest.getTryCount());
+         scanLogService.saveScanLogs(scanLog);
         orderedItems= itemCartService.checkNextStatus(orderedItems, foundItems, scanRequest);
         List<Snapshot> snapshotList = snapshotRepository.findByOrderId(scanRequest.getOrderId());
         Snapshot thisSnapshot = snapshotList.get(scanRequest.getTryCount());

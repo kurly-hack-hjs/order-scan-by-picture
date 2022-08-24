@@ -20,6 +20,7 @@ public class ScanLog {
     private Long id;
 
     private String loginId;
+
     private Long orderId;
 
     private LocalDateTime timestamp;
@@ -28,12 +29,15 @@ public class ScanLog {
 
     private String scanUrl;
 
+    private int tryCount;
 
-    public ScanLog(String loginId, Long orderId, String scanResult, String scanUrl) {
+
+    public ScanLog(String loginId, Long orderId, String scanResult, String scanUrl, int count) {
         this.loginId = loginId;
         this.orderId = orderId;
         this.timestamp = LocalDateTime.now(ZoneId.of("Asia/Tokyo"));
         this.scanResult = scanResult;
         this.scanUrl = scanUrl;
+        this.tryCount = count;
     }
 }
