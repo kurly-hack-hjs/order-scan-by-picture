@@ -94,7 +94,7 @@ public class OrderController {
     @ApiOperation(
             value = "주문정보 스캔결과 업데이트 또는 (관리자) 주문정보 스캔결과 리셋"
             , notes = "존재하지 않는 orderId를 보내게 되면 404 NOT FOUND가 뜹니다. swagger request body의 Schema, [주문정보 목록 조회 api]를 이용해서 사용가능한 id를 확인하세요. 관리자모드에서 RESET으로 보낼시에 tryConunt가 초기화되고 RESET이가 됩니다.")
-    @PatchMapping("/order/{orderId}/scan_result")
+    @PostMapping("/order/{orderId}/scan_result")
     public ResponseEntity patchOrderToNewStatus (@RequestBody PatchOrderRequest request){
         Optional<Order> wrapperOrder = orderService.findOneOrderById(request.getOrderId());
         if (! wrapperOrder.isPresent()){
