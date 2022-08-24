@@ -8,9 +8,11 @@ import com.hackaton.kurly.domain.Item.dto.ItemsResponse;
 import com.hackaton.kurly.domain.Item.dto.OrderedItemInfo;
 import com.hackaton.kurly.domain.itemCart.CartSnapshot;
 import com.hackaton.kurly.domain.itemCart.ItemCartService;
+import com.hackaton.kurly.domain.itemCart.dto.SnapshotResponse;
 import com.hackaton.kurly.domain.order.dto.MakeOrderDto;
 import com.hackaton.kurly.domain.order.dto.PatchOrderRequest;
 import com.hackaton.kurly.domain.order.dto.ReadOrderResponse;
+import com.hackaton.kurly.domain.snapshot.Snapshot;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -52,9 +54,11 @@ public class OrderController {
         if (! wrapperOrder.isPresent()){
             return ResponseEntity.notFound().build();
         }
-        ItemsResponse items = itemService.findOneItemCartByOrderId(orderId);
-
-        return ResponseEntity.ok(new ReadOrderResponse(wrapperOrder.get(), items));
+        SnapshotResponse item = itemCartService.findCartSnapshotById(orderId);
+        ItemsResponse items = new ItemsResponse(orderId, item.getItemList(), item.getTotalItemCount());
+        ItemsResponse recentSnapshot = new ItemsResponse(orderId, item.getSnapshot(), item.getTotalItemCount());
+        Order order = wrapperOrder.get();
+        return ResponseEntity.ok(new ReadOrderResponse(order, items, recentSnapshot, order.getTryCount()));
     }
 
     @ApiOperation(

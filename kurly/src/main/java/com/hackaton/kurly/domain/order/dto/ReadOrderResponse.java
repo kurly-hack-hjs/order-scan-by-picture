@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class ReadOrderResponse {
     private Order order;
     private ItemsResponse items;
+    private ItemsResponse recentSnapshot;
+    private int tryCount;
 }
